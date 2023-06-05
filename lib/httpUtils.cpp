@@ -32,10 +32,13 @@ class httpUtilsAlt : public httpUtils_H
             }
             curl_easy_setopt(curl, CURLOPT_URL, header.c_str());
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, got_data);
+
+            CURLcode responseCode = curl_easy_perform(curl);
             long http_code = 0;
             curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
             
-            if(http_code != 200){
+            if(responseCode != CURLE_OK){
+                cout << "responseCode fail: " << responseCode << endl;
                 cout << "http_code fail: " << http_code << endl;
                 curl_easy_cleanup(curl);
                 return;
