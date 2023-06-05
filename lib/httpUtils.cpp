@@ -7,30 +7,34 @@ using std::cout;
 using std::endl;
 using std::string;
 
-//https://rdb.altlinux.org/api/export/branch_binary_packages/p10?arch=x86_64
-
 class httpUtilsAlt : public httpUtils_H
 {
 
     public:
-        void GET(string branch, string arch="") override
+        string GET(string branch, string arch="") override
         {
             if(branch.empty()){
                 cout << "branch name is empty" << endl;
-                return;
+                return "";
             } 
-            header.append(branch);
+            url.append(branch);
             if(!arch.empty()){
-                header.append("?arch=" + arch);
+                url.append("?arch=" + arch);
             }
-            cout << header << endl;
+            cout << url << endl;
+            struct curl_slist *headers=NULL;
+            headers = curl_slist_append(headers, "Accept: application/json");  
+            headers = curl_slist_append(headers, "Content-Type: application/json");
+            headers = curl_slist_append(headers, "charset: utf-8"); 
             CURL *curl = curl_easy_init();
             if(!curl){
                 cout << "curl fail" << endl;
                 curl_easy_cleanup(curl);
-                return;
+                return "";
             }
-            curl_easy_setopt(curl, CURLOPT_URL, header.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPGET,1); 
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, got_data);
 
             CURLcode responseCode = curl_easy_perform(curl);
@@ -41,31 +45,27 @@ class httpUtilsAlt : public httpUtils_H
                 cout << "responseCode fail: " << responseCode << endl;
                 cout << "http_code fail: " << http_code << endl;
                 curl_easy_cleanup(curl);
-                return;
+                return "";
             }
             cout << "http_code: " << http_code << endl;
 
+            curl_slist_free_all(headers);
             curl_easy_cleanup(curl);
-            return;
+            return *DownloadedResponse;
         }
 
     private:
         
-        string header = "https://rdb.altlinux.org/api/export/branch_binary_packages/";
+        string url = "https://rdb.altlinux.org/api/export/branch_binary_packages/";
+        static string *DownloadedResponse;
 
-        static size_t got_data(char *buffer, size_t itemSize, size_t nitems, void *ignoreThis)
+        static size_t got_data(char *buffer, size_t itemSize, size_t nitems, string *buffer_in)
         {
-            size_t bytes = itemSize * nitems;
-            
-            int linenumber = 1;
-            for(int i = 0; i < bytes; i++){
-                cout << buffer[i];
-                if(buffer[i] == '\n'){
-                    linenumber++;
-                    cout << "line:" << linenumber;
-                }
+            if(buffer_in != NULL){
+                buffer_in->append(buffer, itemSize * nitems);
+                DownloadedResponse = buffer_in;
+                return itemSize * nitems;
             }
-            cout << "\n\n";
-            return bytes;            
+            return 0;            
         }
 };

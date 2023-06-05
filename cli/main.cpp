@@ -13,7 +13,8 @@ int main(int argc, char **argv)
 	}
 
 	httpUtils_H *api = new httpUtilsAlt();
-	api->GET(argv[1], argv[2]);
+	string info = api->GET(argv[1], argv[2]);
+	cout << info << endl;
 	
 	delete api;
 	return 0;

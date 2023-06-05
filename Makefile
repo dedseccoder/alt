@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-lcurl
+CFLAGS=-lcurl -std=c++11
 
 all:start
 
