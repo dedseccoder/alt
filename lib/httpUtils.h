@@ -1,21 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <curl/curl.h>
 
 size_t __got_data(char*, size_t, size_t, void*);
 
 char *GET_Export(char *url, char *branch, char *_arch)
 {
-    if(!branch){
+    if(!branch || !url){
         printf("branch name is empty\n");
         return "";
     }
 
-    url = realloc(url, strlen(url) + strlen(branch)  + 1);
     strcat(url, branch);
 
     if(_arch){
-        url = realloc(url, strlen(url) + strlen("?arch=") + strlen(_arch)  + 1);
         strcat(url, "?arch=");
         strcat(url, _arch);
     }
@@ -44,7 +43,7 @@ char *GET_Export(char *url, char *branch, char *_arch)
     printf("http_code: %ld\n", http_code);
 
     curl_easy_cleanup(curl);
-    return "empty";
+    return "";
 }    
 
 size_t __got_data(char *buffer, size_t itemSize, size_t nitems, void *ignorethis)
