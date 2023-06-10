@@ -5,6 +5,11 @@
 
 size_t __got_data(char*, size_t, size_t, void*);
 
+struct __url_data {
+    size_t size;
+    char* data;
+};
+
 char *GET_Export(char *url, char *branch, char *_arch)
 {
     if(!branch || !url){
@@ -20,6 +25,10 @@ char *GET_Export(char *url, char *branch, char *_arch)
     }
     printf("%s\n",url);
 
+    struct __url_data url_data;
+    url_data.data = NULL;
+    url_data.size = 0;
+
     CURL *curl = curl_easy_init();
     if(!curl){
         printf("curl fail\n");
@@ -29,6 +38,7 @@ char *GET_Export(char *url, char *branch, char *_arch)
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_HTTPGET,1); 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, __got_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &url_data);
 
     CURLcode responseCode = curl_easy_perform(curl);
     long http_code = 0;
@@ -41,18 +51,22 @@ char *GET_Export(char *url, char *branch, char *_arch)
         return "";
     }
     printf("http_code: %ld\n", http_code);
-
     curl_easy_cleanup(curl);
-    return "";
+    return url_data.data;
 }    
 
-size_t __got_data(char *buffer, size_t itemSize, size_t nitems, void *ignorethis)
-{    
+size_t __got_data(char *buffer, size_t itemSize, size_t nitems, void *userp)
+{
     size_t bytes = itemSize * nitems;
-    for(int i = 0; i < bytes; i++)
-    {
-        printf("%c", buffer[i]);
+    struct __url_data *mem = (struct __url_data*) userp; 
+    char *ptr = realloc(mem->data, mem->size + bytes + 1);
+    if(!ptr){
+        return 0;
     }
+    mem->data = ptr;
+    memcpy(&mem->data[mem->size], buffer, bytes);
+    mem->size += bytes;
+    mem->data[mem->size] = 0;
 
     return bytes;
 }

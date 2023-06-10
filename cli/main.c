@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	}
 
 	char url [2048] = "https://rdb.altlinux.org/api/export/branch_binary_packages/";
-	char *info;
+	char* info;
 	if(argv[2]){
 		info = GET_Export(url, argv[1], argv[2]);
 	}
@@ -19,7 +19,6 @@ int main(int argc, char **argv)
 		info = GET_Export(url, argv[1], NULL);
 	}
 	printf("%s\n", info);
-	
-	free(info);
+
 	return 0;
 }
