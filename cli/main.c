@@ -1,10 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <curl/curl.h>
 #include "../lib/httpUtils.h"
 
-char* searchString(char*, char*);
+char* getValue(char*, char*);
+
+typedef struct {
+	 char* name;
+	 time_t buildtime;
+} value;
+
+typedef struct node {
+    value v;
+    struct node* next; 
+};
 
 int main(int argc, char **argv)
 {
@@ -12,7 +23,7 @@ int main(int argc, char **argv)
       exit(EXIT_FAILURE);
 	}
 
-	char* stringTags [8] = { "name", "epoch", "version", "release", "arch", "disttag", "buildtime", "source"};
+	char* stringTags [2] = {"name", "buildtime"};
 
 	char url [2048] = "https://rdb.altlinux.org/api/export/branch_binary_packages/";
 	char* info;
@@ -23,9 +34,9 @@ int main(int argc, char **argv)
 		info = GET_Export(url, argv[1], NULL);
 	}
 
-	for(int i = 0; i < 8; i++){
-		printf("%zu\n",strlen(info));
-		printf("%s: %s\n", stringTags[i], searchString(info, stringTags[i]));
+	for(int i = 0; i < 2; i++)
+	{
+		printf("%s: %s\n", stringTags[i], getValue(info, stringTags[i]));
 	}
 
 	free(info);
@@ -33,13 +44,35 @@ int main(int argc, char **argv)
 }
 
 
-char* searchString(char* str, char* source)
+char* getValue(char* str, char* source)
 {
-	char* res = strstr(str, source);
-	char* swap = strdup(str);
-	
-  	char* pch  = strtok(swap, " :,\"[]{}");
-	printf("method %zu\n",strlen(str));
-	pch = strtok(NULL, " :,\"{}[]");
-	return pch;
+	char* data = (char*)malloc(2048);
+	char* out = data; 
+	char* search = strstr(str, source);
+	search = strstr(search, ":");
+	search++;
+	while(*search == ' ') search++;
+	if(*search == '"'){
+		search++;
+		while(*search  != '"' && *(search-1) != '\\'){
+			*out = *search;
+			out++;
+			search++;
+		}
+	} 
+	else{
+		while(*search != ',' && *search != ' ' && *search != '\n' && *search != '}'){
+			*out = *search;
+			out++;
+			search++;
+		}
+	}
+	*out = '\0'; 
+
+	if (data == out){
+		free(data);
+		return NULL;
+	}
+
+	return data;
 }
