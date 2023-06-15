@@ -21,11 +21,11 @@ typedef struct {
 
 
 
-
 char* getValue(char*, char*, int*);
 void InitList(list*);
 void printList(list*);
 void pushList(list*, char*, time_t);
+int countDubStr(char*, char*);
 
 int main(int argc, char **argv)
 {
@@ -47,8 +47,9 @@ int main(int argc, char **argv)
 	list jsonInfo1;
     InitList(&jsonInfo1);
 	int index = 0;
-
-	while(*info != '\0'){
+	int names = countDubStr(info, "{\"name\":");
+	int i = 0;
+	while(i < names){
 		char* data = getValue(info, stringTags[0], &index);
 		info += index;
 		char* buildtimestring = getValue(info, stringTags[1], &index);
@@ -56,12 +57,10 @@ int main(int argc, char **argv)
 		char *e;
 		time_t buildtime = strtoll(buildtimestring, &e, 0);
 		pushList(&jsonInfo1, data, buildtime);
+		i++;
 	}
 	printList(&jsonInfo1);
-	printf("\n");
 
-	free(index);
-	free(info);
 	return 0;
 }
 
@@ -84,10 +83,31 @@ void printList(list *sList)
 {
     node *p = sList->tail;
     while(p != NULL) {
-        printf("name: %s\n buildtime = %lld\n", p->v.name, p->v.buildtime);
+        printf("name: %s\n buildtime = %lld\n\n", p->v.name, p->v.buildtime);
         p = p->next;
     }
 }
+
+int countDubStr(char* str, char* search)
+{
+	int found;
+	int count = 0;
+	int len1 = strlen(str);
+	int len2 = strlen(search);
+	for(int i = 0; i <= len1 - len2; i++){
+		found = 1;
+		for(int j = 0; j < len2; j++){
+			if(str[i+j] != search[j]){
+				found = 0;
+				break;
+			}
+		}
+		if(found == 1){
+			count++;
+		}
+	}
+	return count;
+};
 
 char* getValue(char* str, char* source, int *index)
 {
