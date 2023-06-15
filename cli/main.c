@@ -5,17 +5,27 @@
 #include <curl/curl.h>
 #include "../lib/httpUtils.h"
 
-char* getValue(char*, char*);
-
 typedef struct {
 	 char* name;
 	 time_t buildtime;
 } value;
 
-typedef struct node {
+typedef struct {
     value v;
     struct node* next; 
-};
+} node;
+
+typedef struct {
+    node *tail; 
+}list;
+
+
+
+
+char* getValue(char*, char*, int*);
+void InitList(list*);
+void printList(list*);
+void pushList(list*, char*, time_t);
 
 int main(int argc, char **argv)
 {
@@ -34,22 +44,58 @@ int main(int argc, char **argv)
 		info = GET_Export(url, argv[1], NULL);
 	}
 
-	for(int i = 0; i < 2; i++)
-	{
-		printf("%s: %s\n", stringTags[i], getValue(info, stringTags[i]));
-	}
+	list jsonInfo1;
+    InitList(&jsonInfo1);
+	int index = 0;
 
+	while(*info != '\0'){
+		char* data = getValue(info, stringTags[0], &index);
+		info += index;
+		char* buildtimestring = getValue(info, stringTags[1], &index);
+		info += index;
+		char *e;
+		time_t buildtime = strtoll(buildtimestring, &e, 0);
+		pushList(&jsonInfo1, data, buildtime);
+	}
+	printList(&jsonInfo1);
+	printf("\n");
+
+	free(index);
 	free(info);
 	return 0;
 }
 
+void InitList(list *sList)
+{
+    sList->tail = NULL;
+}
 
-char* getValue(char* str, char* source)
+void pushList(list *sList, char* name, time_t seconds)
+{
+    node *p;
+    p = malloc(sizeof(node));
+    p->v.name = name;
+	p->v.buildtime = seconds;
+    p->next = sList->tail;
+    sList->tail = p;
+}
+
+void printList(list *sList)
+{
+    node *p = sList->tail;
+    while(p != NULL) {
+        printf("name: %s\n buildtime = %lld\n", p->v.name, p->v.buildtime);
+        p = p->next;
+    }
+}
+
+char* getValue(char* str, char* source, int *index)
 {
 	char* data = (char*)malloc(2048);
 	char* out = data; 
 	char* search = strstr(str, source);
 	search = strstr(search, ":");
+	*index = search - str;
 	search++;
 	while(*search == ' ') search++;
 	if(*search == '"'){
