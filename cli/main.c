@@ -26,10 +26,13 @@ void InitList(list*);
 void printList(list*);
 void pushList(list*, char*, time_t);
 int countDubStr(char*, char*);
+void getOnly(list*, list*, list*);
+void getFreshest(list*, list*, list*);
+void writeJsonFile(list*, list*, list*);
 
 int main(int argc, char **argv)
 {
-	if(!(argc == 3 || argc == 2)){
+	if(!(argc == 4 || argc == 3)){
       exit(EXIT_FAILURE);
 	}
 
@@ -37,14 +40,14 @@ int main(int argc, char **argv)
 
 	char url [2048] = "https://rdb.altlinux.org/api/export/branch_binary_packages/";
 	char* info;
-	if(argv[2]){
-		info = GET_Export(url, argv[1], argv[2]);
+	if(argv[3]){
+		info = GET_Export(url, argv[1], argv[3]);
 	}
 	else{
 		info = GET_Export(url, argv[1], NULL);
 	}
 
-	list jsonInfo1;
+	list jsonInfo1, jsonInfo2;
     InitList(&jsonInfo1);
 	int index = 0;
 	int names = countDubStr(info, "{\"name\":");
@@ -59,7 +62,28 @@ int main(int argc, char **argv)
 		pushList(&jsonInfo1, data, buildtime);
 		i++;
 	}
-	printList(&jsonInfo1);
+	
+	index = 0;
+	names = 0;
+	i = 0;
+
+	char* info2;
+	if(argv[3]){
+		info2 = GET_Export(url, argv[2], argv[3]);
+	}
+	else{
+		info2 = GET_Export(url, argv[2], NULL);
+	}
+
+	list onlyA, onlyB, freshList;
+	InitList(&onlyA);
+	InitList(&onlyB);
+	InitList(&freshList);
+
+	getOnly(&jsonInfo1, &jsonInfo2, &onlyA);
+	getOnly(&jsonInfo1, &jsonInfo2, &onlyB);
+	getFreshest(&jsonInfo1, &jsonInfo2, &freshList);
+	writeJsonFile(&onlyA, &onlyB, &freshList);
 
 	return 0;
 }
