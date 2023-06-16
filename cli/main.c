@@ -47,8 +47,9 @@ int main(int argc, char **argv)
 		info = GET_Export(url, argv[1], NULL);
 	}
 
-	list jsonInfo1, jsonInfo2;
-    InitList(&jsonInfo1);
+	list jsonInfoList1, jsonInfoList2;
+
+    InitList(&jsonInfoList1);
 	int index = 0;
 	int names = countDubStr(info, "{\"name\":");
 	int i = 0;
@@ -59,10 +60,10 @@ int main(int argc, char **argv)
 		info += index;
 		char *e;
 		time_t buildtime = strtoll(buildtimestring, &e, 0);
-		pushList(&jsonInfo1, data, buildtime);
+		pushList(&jsonInfoList1, data, buildtime);
 		i++;
 	}
-	
+
 	index = 0;
 	names = 0;
 	i = 0;
@@ -75,14 +76,26 @@ int main(int argc, char **argv)
 		info2 = GET_Export(url, argv[2], NULL);
 	}
 
+	InitList(&jsonInfoList2);
+	while(i < names){
+		char* data = getValue(info2, stringTags[0], &index);
+		info2 += index;
+		char* buildtimestring = getValue(info2, stringTags[1], &index);
+		info2 += index;
+		char *e;
+		time_t buildtime = strtoll(buildtimestring, &e, 0);
+		pushList(&jsonInfoList2, data, buildtime);
+		i++;
+	}
+
 	list onlyA, onlyB, freshList;
 	InitList(&onlyA);
 	InitList(&onlyB);
 	InitList(&freshList);
 
-	getOnly(&jsonInfo1, &jsonInfo2, &onlyA);
-	getOnly(&jsonInfo1, &jsonInfo2, &onlyB);
-	getFreshest(&jsonInfo1, &jsonInfo2, &freshList);
+	getOnly(&jsonInfoList1, &jsonInfoList2, &onlyA);
+	getOnly(&jsonInfoList1, &jsonInfoList2, &onlyB);
+	getFreshest(&jsonInfoList1, &jsonInfoList2, &freshList);
 	writeJsonFile(&onlyA, &onlyB, &freshList);
 
 	return 0;
@@ -110,6 +123,73 @@ void printList(list *sList)
         printf("name: %s\n buildtime = %lld\n\n", p->v.name, p->v.buildtime);
         p = p->next;
     }
+}
+
+void getOnly(list* jsonInfo1, list* jsonInfo2, list* only)
+{
+	node *p1 = jsonInfo1->tail;
+	node *p2 = jsonInfo2->tail;
+
+	int dub = 1;
+	while(p1 != NULL){
+		while(p2 != NULL){
+			if(p1->v.name == p2->v.name){
+				dub = 0;
+			}
+			p2 = p2->next;
+		}
+		p2 = jsonInfo2->tail;
+		if(dub){
+			pushList(only, p1->v.name, p1->v.buildtime);
+		}
+		p1 = p1->next;
+	}	
+}
+
+void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
+{
+	node *p1 = jsonInfo1->tail;
+	node *p2 = jsonInfo2->tail;
+
+	int unique = 1;
+	while(p1 != NULL){
+		while(p2 != NULL){
+			if(p1->v.name == p2->v.name){
+				unique = 0;
+				if(p1->v.buildtime >= p2->v.buildtime){
+					pushList(freshList, p1->v.name, p1->v.buildtime);
+				}
+				else{
+					pushList(freshList, p2->v.name, p2->v.buildtime);
+				}
+				break;
+			}
+			p2 = p2->next;
+		}
+		p2 = jsonInfo2->tail;
+		if(unique){
+			pushList(freshList, p1->v.name, p1->v.buildtime);
+		}
+		p1 = p1->next;
+	}
+	p1 = jsonInfo1->tail;
+	p2 = jsonInfo2->tail;
+	unique = 1;
+	while (p2 != NULL){
+		while (p1 != NULL){
+			if(p1->v.name == p2->v.name){
+				unique = 0;
+				break;
+			}
+			p1 = p1->next;
+		}
+		p1 = jsonInfo1->tail;
+		if(unique){
+			pushList(freshList, p2->v.name, p2->v.buildtime);
+		}
+		p2 = p2->next;
+	}
+	
 }
 
 int countDubStr(char* str, char* search)
