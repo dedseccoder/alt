@@ -189,7 +189,7 @@ void writeJsonFile(list* onlyA, list* onlyB, list* freshList, char* branchA, cha
 			fprintf(pf, ", ");
 		}
 	}
-	fprintf(pf, "],\n");
+	fprintf(pf, "]");
 
 	fprintf(pf, "\n}");
 	fclose(pf);
