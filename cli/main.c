@@ -7,6 +7,7 @@
 
 typedef struct {
 	 char* name;
+	 char* version;
 	 time_t buildtime;
 } value;
 
@@ -24,11 +25,11 @@ typedef struct {
 char* getValue(char*, char*, int*);
 void InitList(list*);
 void printList(list*);
-void pushList(list*, char*, time_t);
+void pushList(list*, char*, time_t, char*);
 int countDubStr(char*, char*);
 void getOnly(list*, list*, list*);
 void getFreshest(list*, list*, list*);
-void writeJsonFile(list*, list*, list*);
+void writeJsonFile(list*, list*, list*, char*, char*, char*);
 
 int main(int argc, char **argv)
 {
@@ -36,7 +37,7 @@ int main(int argc, char **argv)
       exit(EXIT_FAILURE);
 	}
 
-	char* stringTags [2] = {"name", "buildtime"};
+	char* stringTags [3] = {"name", "version", "buildtime"};
 
 	char url [2048] = "https://rdb.altlinux.org/api/export/branch_binary_packages/";
 	char* info;
@@ -56,13 +57,17 @@ int main(int argc, char **argv)
 	while(i < names){
 		char* data = getValue(info, stringTags[0], &index);
 		info += index;
-		char* buildtimestring = getValue(info, stringTags[1], &index);
+		char* version = getValue(info, stringTags[1], &index);
 		info += index;
+		char* buildtimestring  = getValue(info, stringTags[2], &index);
+		info += index;
+		
 		char *e;
 		time_t buildtime = strtoll(buildtimestring, &e, 0);
-		pushList(&jsonInfoList1, data, buildtime);
+		pushList(&jsonInfoList1, data, buildtime, version);
 		i++;
 	}
+	free(info);
 
 	index = 0;
 	names = 0;
@@ -76,17 +81,22 @@ int main(int argc, char **argv)
 		info2 = GET_Export(url, argv[2], NULL);
 	}
 
+	names = countDubStr(info2, "{\"name\":");
 	InitList(&jsonInfoList2);
 	while(i < names){
 		char* data = getValue(info2, stringTags[0], &index);
 		info2 += index;
-		char* buildtimestring = getValue(info2, stringTags[1], &index);
+		char* version = getValue(info2, stringTags[1], &index);
 		info2 += index;
+		char* buildtimestring  = getValue(info2, stringTags[2], &index);
+		info2 += index;
+
 		char *e;
 		time_t buildtime = strtoll(buildtimestring, &e, 0);
-		pushList(&jsonInfoList2, data, buildtime);
+		pushList(&jsonInfoList2, data, buildtime, version);
 		i++;
 	}
+	free(info2);
 
 	list onlyA, onlyB, freshList;
 	InitList(&onlyA);
@@ -94,9 +104,9 @@ int main(int argc, char **argv)
 	InitList(&freshList);
 
 	getOnly(&jsonInfoList1, &jsonInfoList2, &onlyA);
-	getOnly(&jsonInfoList1, &jsonInfoList2, &onlyB);
+	getOnly(&jsonInfoList2, &jsonInfoList1, &onlyB);
 	getFreshest(&jsonInfoList1, &jsonInfoList2, &freshList);
-	writeJsonFile(&onlyA, &onlyB, &freshList);
+	writeJsonFile(&onlyA, &onlyB, &freshList, argv[3], argv[1], argv[2]);
 
 	return 0;
 }
@@ -106,12 +116,15 @@ void InitList(list *sList)
     sList->tail = NULL;
 }
 
-void pushList(list *sList, char* name, time_t seconds)
+void pushList(list *sList, char* name, time_t seconds, char* version)
 {
     node *p;
     p = malloc(sizeof(node));
+
     p->v.name = name;
 	p->v.buildtime = seconds;
+	p->v.version = version;
+
     p->next = sList->tail;
     sList->tail = p;
 }
@@ -120,9 +133,56 @@ void printList(list *sList)
 {
     node *p = sList->tail;
     while(p != NULL) {
-        printf("name: %s\n buildtime = %lld\n\n", p->v.name, p->v.buildtime);
+        printf("name: %s\nbuildtime = %lld\nversion = %s\n\n", p->v.name, p->v.buildtime, p->v.version);
         p = p->next;
     }
+}
+
+void writeJsonFile(list* onlyA, list* onlyB, list* freshList, char* arch, char* branchA, char* branchB)
+{
+	node *p1 = onlyA->tail;
+	node *p2 = onlyB->tail;
+	node *p3 = freshList->tail;
+	char filename[1024];
+	strcat(filename, "alt-export-");
+	strcat(filename, arch);
+	strcat(filename, ".json");
+	FILE *pf = fopen(filename, "w");
+	fprintf(pf, "{\n");
+
+	fprintf(pf, "\t\"%s\": [", branchA);
+	while(p1 != NULL){
+		fprintf(pf, "{\"name\": \"%s\", \"version\": \"%s\", \"buildtime\": %lld}", p1->v.name, p1->v.version, p1->v.buildtime);
+		p1 = p1->next;
+		if(p1 != NULL){
+			fprintf(pf, ", ");
+		}
+	}
+	fprintf(pf, "],\n");
+
+	fprintf(pf, "\t\"%s\": [", branchB);
+	while(p2 != NULL){
+		fprintf(pf, "{\"name\": \"%s\", \"version\": \"%s\", \"buildtime\": %lld}", p2->v.name, p2->v.version, p2->v.buildtime);
+		p2 = p2->next;
+		if(p2 != NULL){
+			fprintf(pf, ", ");
+		}
+	}
+	fprintf(pf, "],\n");
+
+	fprintf(pf, "\t\"FreshList\": [");
+	while(p3 != NULL){
+		fprintf(pf, "{\"name\": \"%s\", \"version\": \"%s\", \"buildtime\": %lld}", p3->v.name, p3->v.version, p3->v.buildtime);
+		p3 = p3->next;
+		if(p3 != NULL){
+			fprintf(pf, ", ");
+		}
+	}
+	fprintf(pf, "],\n");
+
+	fprintf(pf, "\n}");
+	fclose(pf);
+	printf("JSON file created");
 }
 
 void getOnly(list* jsonInfo1, list* jsonInfo2, list* only)
@@ -140,7 +200,7 @@ void getOnly(list* jsonInfo1, list* jsonInfo2, list* only)
 		}
 		p2 = jsonInfo2->tail;
 		if(dub){
-			pushList(only, p1->v.name, p1->v.buildtime);
+			pushList(only, p1->v.name, p1->v.buildtime, p1->v.version);
 		}
 		p1 = p1->next;
 	}	
@@ -151,16 +211,17 @@ void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
 	node *p1 = jsonInfo1->tail;
 	node *p2 = jsonInfo2->tail;
 
-	int unique = 1;
+	int unique;
 	while(p1 != NULL){
+		unique = 1;
 		while(p2 != NULL){
 			if(p1->v.name == p2->v.name){
 				unique = 0;
 				if(p1->v.buildtime >= p2->v.buildtime){
-					pushList(freshList, p1->v.name, p1->v.buildtime);
+					pushList(freshList, p1->v.name, p1->v.buildtime, p1->v.version);
 				}
 				else{
-					pushList(freshList, p2->v.name, p2->v.buildtime);
+					pushList(freshList, p2->v.name, p2->v.buildtime, p2->v.version);
 				}
 				break;
 			}
@@ -168,14 +229,14 @@ void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
 		}
 		p2 = jsonInfo2->tail;
 		if(unique){
-			pushList(freshList, p1->v.name, p1->v.buildtime);
+			pushList(freshList, p1->v.name, p1->v.buildtime, p1->v.version);
 		}
 		p1 = p1->next;
 	}
 	p1 = jsonInfo1->tail;
 	p2 = jsonInfo2->tail;
-	unique = 1;
 	while (p2 != NULL){
+		unique = 1;
 		while (p1 != NULL){
 			if(p1->v.name == p2->v.name){
 				unique = 0;
@@ -185,11 +246,10 @@ void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
 		}
 		p1 = jsonInfo1->tail;
 		if(unique){
-			pushList(freshList, p2->v.name, p2->v.buildtime);
+			pushList(freshList, p2->v.name, p2->v.buildtime, p2->v.version);
 		}
 		p2 = p2->next;
 	}
-	
 }
 
 int countDubStr(char* str, char* search)
