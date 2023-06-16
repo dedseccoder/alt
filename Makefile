@@ -11,3 +11,4 @@ liber:
 
 clean:
 	$(RM) -rf bin/*
+	$(RM) -fv *.json

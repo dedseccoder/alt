@@ -96,10 +96,12 @@ int main(int argc, char **argv)
 		pushList(&jsonInfoList2, data, buildtime, version);
 		i++;
 	}
+
 	list onlyA, onlyB, freshList;
 	InitList(&onlyA);
 	InitList(&onlyB);
 	InitList(&freshList);
+
 	printf("Sorting...\n");
 	getOnly(&jsonInfoList1, &jsonInfoList2, &onlyA);
 	getOnly(&jsonInfoList2, &jsonInfoList1, &onlyB);
@@ -147,14 +149,13 @@ void writeJsonFile(list* onlyA, list* onlyB, list* freshList, char* branchA, cha
 	node *p1 = onlyA->tail;
 	node *p2 = onlyB->tail;
 	node *p3 = freshList->tail;
-	char filename[1024];
-	strcat(filename, "alt-export-");
+	char filename[1024] = "alt-export-";
 	if(_arch){
 		strcat(filename, _arch);
 	}
 	else{
 		strcat(filename, branchA);
-		strcat(filename, "_");
+		strcat(filename, "-");
 		strcat(filename, branchB);
 	}
 	strcat(filename, ".json");
@@ -170,6 +171,7 @@ void writeJsonFile(list* onlyA, list* onlyB, list* freshList, char* branchA, cha
 		}
 	}
 	fprintf(pf, "],\n");
+	printf("Branch %s is done\n", branchA);
 
 	fprintf(pf, "\t\"%s\": [", branchB);
 	while(p2 != NULL){
@@ -180,6 +182,7 @@ void writeJsonFile(list* onlyA, list* onlyB, list* freshList, char* branchA, cha
 		}
 	}
 	fprintf(pf, "],\n");
+	printf("Branch %s is done\n", branchB);
 
 	fprintf(pf, "\t\"FreshList\": [");
 	while(p3 != NULL){
@@ -190,6 +193,7 @@ void writeJsonFile(list* onlyA, list* onlyB, list* freshList, char* branchA, cha
 		}
 	}
 	fprintf(pf, "]");
+	printf("Freshest list is done\n");
 
 	fprintf(pf, "\n}");
 	fclose(pf);
@@ -201,20 +205,21 @@ void getOnly(list* jsonInfo1, list* jsonInfo2, list* only)
 	node *p1 = jsonInfo1->tail;
 	node *p2 = jsonInfo2->tail;
 
-	int dub = 1;
+	int unique;
 	while(p1 != NULL){
+		unique = 1;
 		while(p2 != NULL){
-			if(p1->v.name == p2->v.name){
-				dub = 0;
+			if(strcmp(p1->v.name, p2->v.name) == 0){
+				unique = 0;
 			}
 			p2 = p2->next;
 		}
 		p2 = jsonInfo2->tail;
-		if(dub){
+		if(unique != 0){
 			pushList(only, p1->v.name, p1->v.buildtime, p1->v.version);
 		}
 		p1 = p1->next;
-	}	
+	}
 }
 
 void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
@@ -226,9 +231,9 @@ void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
 	while(p1 != NULL){
 		unique = 1;
 		while(p2 != NULL){
-			if(p1->v.name == p2->v.name){
+			if(strcmp(p1->v.name, p2->v.name) == 0){
 				unique = 0;
-				if(p1->v.buildtime >= p2->v.buildtime){
+				if(p1->v.buildtime > p2->v.buildtime){
 					pushList(freshList, p1->v.name, p1->v.buildtime, p1->v.version);
 				}
 				else{
@@ -249,7 +254,7 @@ void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
 	while (p2 != NULL){
 		unique = 1;
 		while (p1 != NULL){
-			if(p1->v.name == p2->v.name){
+			if(strcmp(p1->v.name, p2->v.name) == 0){
 				unique = 0;
 				break;
 			}
