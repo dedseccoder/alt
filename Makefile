@@ -1,14 +1,22 @@
 CC=gcc
 CFLAGS=-std=c11 -lcurl
 
-all:start
+all: applicationAlt
 
-start: liber
-	$(CC) -o bin/application cli/main.c $(CFLAGS)
+install: applicationAlt
+	mv -v bin/*.so /usr/local/lib/
+	mv -v bin/applicationAlt /usr/local/bin/
+	sudo ldconfig /usr/local/lib
 
-liber:
-	$(CC) -c lib/httpUtils.h -o bin/httpH.o $(CFLAGS)
+applicationAlt: libhttpUtils.so
+	$(CC) -L./bin/ -o bin/$@ cli/main.c -lhttpUtils $(CFLAGS)
+
+libhttpUtils.o: lib/libhttpUtils.c
+	$(CC) $(CFLAGS) -c libhttpUtils.c
+
+libhttpUtils.so: lib/libhttpUtils.c
+	$(CC) $(CFLAGS) -fPIC -shared -o bin/$@ lib/libhttpUtils.c -lc
 
 clean:
-	$(RM) -rf bin/*
+	$(RM) -rfv bin/*
 	$(RM) -fv *.json

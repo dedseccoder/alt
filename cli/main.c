@@ -3,18 +3,18 @@
 #include <time.h>
 #include <string.h>
 #include <curl/curl.h>
-#include "../lib/httpUtils.h"
+#include "../lib/libhttpUtils.c"
 
 typedef struct {
 	 char* name;
 	 char* version;
 	 time_t buildtime;
-} value;
+}value;
 
 typedef struct {
     value v;
     struct node* next; 
-} node;
+}node;
 
 typedef struct {
     node *tail; 
