@@ -104,8 +104,11 @@ int main(int argc, char **argv)
 
 	printf("Sorting...\n");
 	getOnly(&jsonInfoList1, &jsonInfoList2, &onlyA);
+	printf("created list A\n");
 	getOnly(&jsonInfoList2, &jsonInfoList1, &onlyB);
+	printf("created list B\n");
 	getFreshest(&jsonInfoList1, &jsonInfoList2, &freshList);
+	printf("created freshest list\n");
 	printf("Writing JSON file...\n");
 	if(argv[3]){
 		writeJsonFile(&onlyA, &onlyB, &freshList, argv[1], argv[2], argv[3]);
