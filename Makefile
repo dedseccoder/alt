@@ -23,5 +23,5 @@ dirsCreate:
 	fi
 
 clean:
-	$(RM) -rfv bin/
+	sudo $(RM) -rfv bin/
 	$(RM) -fv *.json

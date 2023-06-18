@@ -29,11 +29,11 @@ void pushList(list*, char*, time_t, char*);
 int countDubStr(char*, char*);
 void getOnly(list*, list*, list*);
 void getFreshest(list*, list*, list*);
-void writeJsonFile(list*, list*, list*, char*, char*, char*);
+void writeJsonFile(list*, list*, list*, char*, char*, char*, char*);
 
 int main(int argc, char **argv)
 {
-	if(!(argc == 4 || argc == 3)){
+	if(!(argc == 5 || argc == 4 || argc == 3)){
       exit(EXIT_FAILURE);
 	}
 
@@ -75,7 +75,12 @@ int main(int argc, char **argv)
 
 	char* info2;
 	if(argv[3]){
-		info2 = GET_Export(url, argv[2], argv[3]);
+		if(argv[4]){
+			info2 = GET_Export(url, argv[2], argv[4]);
+		}
+		else{
+			info2 = GET_Export(url, argv[2], argv[3]);
+		}
 	}
 	else{
 		info2 = GET_Export(url, argv[2], NULL);
@@ -111,10 +116,15 @@ int main(int argc, char **argv)
 	printf("created freshest list\n");
 	printf("Writing JSON file...\n");
 	if(argv[3]){
-		writeJsonFile(&onlyA, &onlyB, &freshList, argv[1], argv[2], argv[3]);
+		if(argv[4]){
+			writeJsonFile(&onlyA, &onlyB, &freshList, argv[1], argv[2], argv[3], argv[4]);
+		}
+		else{
+			writeJsonFile(&onlyA, &onlyB, &freshList, argv[1], argv[2], argv[3], NULL);
+		}
 	}
 	else{
-		writeJsonFile(&onlyA, &onlyB, &freshList, argv[1], argv[2], NULL);
+		writeJsonFile(&onlyA, &onlyB, &freshList, argv[1], argv[2], NULL, NULL);
 	}
 
 	return 0;
@@ -147,20 +157,26 @@ void printList(list *sList)
     }
 }
 
-void writeJsonFile(list* onlyA, list* onlyB, list* freshList, char* branchA, char* branchB, char* _arch)
+void writeJsonFile(list* onlyA, list* onlyB, list* freshList, char* branchA, char* branchB, char* _arch, char* _arch2)
 {
 	node *p1 = onlyA->tail;
 	node *p2 = onlyB->tail;
 	node *p3 = freshList->tail;
 	char filename[1024] = "alt-export-";
+
+	strcat(filename, branchA);
+	strcat(filename, "-");
+	strcat(filename, branchB);
+
 	if(_arch){
+		strcat(filename, "-");
 		strcat(filename, _arch);
 	}
-	else{
-		strcat(filename, branchA);
+	if(_arch2){
 		strcat(filename, "-");
-		strcat(filename, branchB);
+		strcat(filename, _arch2);
 	}
+
 	strcat(filename, ".json");
 	FILE *pf = fopen(filename, "w");
 	fprintf(pf, "{\n");
