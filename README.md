@@ -2,12 +2,14 @@
 
 This repository is a test task for the alt Linux team. This CLI-app is using a custom-made library to export data from the alt public [API](https://rdb.altlinux.org/api/) and transforming it into a json file. To execute the app and compare data from two branches, run <br>
 
-`applicationAlt [branch1] [branch2] [arch]` <br>
+`applicationAlt [branch1] [branch2] [arch1] [arch2]` <br>
 
-where `[branch1]` and `[branch2]` are the branches to compare, and `[arch]` is the architecture option (optional argument). Once executed, the app  will gather data from the API for both branches, generate a json file with the comparison, and print it to the command line.
+where `[branch1]` and `[branch2]` are the branches to compare, `[arch1]` and `[arch2]` are the architecture options (optional arguments). Once executed, the app  will gather data from the API for both branches, generate a json file with the comparison. In case you are using only `[arch1]`, both branches will use this type of arch. 
 
 [Branches and arches you can see here](https://packages.altlinux.org/ru/p10/)<br>
-**Example:** `applicationAlt p10 p9 x86_64`
+**Examples:** <br>
+`applicationAlt p10 p9 x86_64` output: `alt-export-p10-p9-x86_64.json` <br>
+`applicationAlt p10 p9 x86_64 i586` output: `alt-export-p10-p9-x86_64-i586.json`
 
 ## installing
 
