@@ -14,9 +14,14 @@ applicationAlt: libhttpUtils.so
 libhttpUtils.o: lib/libhttpUtils.c
 	$(CC) $(CFLAGS) -c libhttpUtils.c
 
-libhttpUtils.so: lib/libhttpUtils.c
+libhttpUtils.so: lib/libhttpUtils.c dirsCreate
 	$(CC) $(CFLAGS) -fPIC -shared -o bin/$@ lib/libhttpUtils.c -lc
 
+dirsCreate:
+	@if [ ! -d bin ]; then\
+		mkdir bin;\
+	fi
+
 clean:
-	$(RM) -rfv bin/*
+	$(RM) -rfv bin/
 	$(RM) -fv *.json
