@@ -17,7 +17,7 @@ Manual installation is also an option. In this case, just run `make`. It will bu
 
 ### probably bug fixes
 
-If you are encountering issues while using `sudo make install`, it's possible that your `ld.so.conf` configuration is not set up correctly. To fix this, open your `ld.so.conf` file using a text editor and add the following line:
+If you are encountering issues while using `sudo make install`, it's possible that your `/etc/ld.so.conf` configuration is not set up correctly. To fix this, open your `ld.so.conf` file using a text editor and add the following line:
 
 ```
 include ld.so.conf.d/*.conf
