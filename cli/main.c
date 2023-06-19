@@ -3,33 +3,7 @@
 #include <time.h>
 #include <string.h>
 #include <curl/curl.h>
-#include "../lib/libhttpUtils.c"
-
-typedef struct {
-	 char* name;
-	 char* version;
-	 time_t buildtime;
-}value;
-
-typedef struct {
-    value v;
-    struct node* next; 
-}node;
-
-typedef struct {
-    node *tail; 
-}list;
-
-
-
-char* getValue(char*, char*, int*);
-void InitList(list*);
-void printList(list*);
-void pushList(list*, char*, time_t, char*);
-int countDubStr(char*, char*);
-void getOnly(list*, list*, list*);
-void getFreshest(list*, list*, list*);
-void writeJsonFile(list*, list*, list*, char*, char*, char*, char*);
+#include "../lib/libhttpUtils.h"
 
 int main(int argc, char **argv)
 {

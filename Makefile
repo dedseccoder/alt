@@ -1,27 +1,30 @@
 CC=gcc
 CFLAGS=-std=c11 -lcurl
+TARGET = applicationAlt
 
-all: applicationAlt
+all: $(TARGET)
 
-install: applicationAlt
-	mv -v bin/*.so /usr/local/lib/
-	mv -v bin/applicationAlt /usr/local/bin/
+install: $(TARGET)
+	sudo mv -v bin/*.so /usr/local/lib/
+	sudo mv -v bin/$(TARGET) /usr/local/bin/
 	sudo ldconfig /usr/local/lib
 
-applicationAlt: libhttpUtils.so
-	$(CC) -L./bin/ -o bin/$@ cli/main.c -lhttpUtils $(CFLAGS)
+$(TARGET): dirCreate libhttpUtils.so main.o
+	$(CC) -Lbin/ -lhttpUtils $(CFLAGS) bin/main.o -o bin/$@
+
+libhttpUtils.so: libhttpUtils.o
+	$(CC) $(CFLAGS) -fPIC -shared -lc bin/libhttpUtils.o -o bin/$@
+
+main.o: cli/main.c
+	$(CC) -c $(CFLAGS) $< -o bin/$@
 
 libhttpUtils.o: lib/libhttpUtils.c
-	$(CC) $(CFLAGS) -c libhttpUtils.c
+	$(CC) $(CFLAGS) -c -fPIC $< -o bin/$@
 
-libhttpUtils.so: lib/libhttpUtils.c dirsCreate
-	$(CC) $(CFLAGS) -fPIC -shared -o bin/$@ lib/libhttpUtils.c -lc
-
-dirsCreate:
+dirCreate:
 	@if [ ! -d bin ]; then\
 		mkdir bin;\
 	fi
 
 clean:
-	sudo $(RM) -rfv bin/
-	$(RM) -fv *.json
+	$(RM) -rfv bin/

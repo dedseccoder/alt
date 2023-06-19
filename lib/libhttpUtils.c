@@ -1,14 +1,11 @@
+#ifndef LIBHTTPJSON
+#define LIBHTTPJSON
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
-
-size_t __got_data(char*, size_t, size_t, void*);
-
-struct __url_data {
-    size_t size;
-    char* data;
-};
+#include "libhttpUtils.h"
 
 char *GET_Export(char *url, char *branch, char *_arch)
 {
@@ -53,9 +50,7 @@ char *GET_Export(char *url, char *branch, char *_arch)
     printf("http_code: %ld\n", http_code);
     curl_easy_cleanup(curl);
     return url_data.data;
-}    
-
-
+}
 
 size_t __got_data(char *buffer, size_t itemSize, size_t nitems, void *userp)
 {
@@ -72,3 +67,5 @@ size_t __got_data(char *buffer, size_t itemSize, size_t nitems, void *userp)
 
     return bytes;
 }
+
+#endif
