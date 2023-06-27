@@ -34,6 +34,7 @@ int countDubStr(char*, char*);
 void getOnly(list*, list*, list*);
 void getFreshest(list*, list*, list*);
 void writeJsonFile(list*, list*, list*, char*, char*, char*, char*);
+int __compareVersion(char*, char*);
 
 char *GET_Export(char *, char *, char *);
 size_t __got_data(char*, size_t, size_t, void*);

@@ -179,6 +179,23 @@ void getOnly(list* jsonInfo1, list* jsonInfo2, list* only)
 	}
 }
 
+int __compareVersion(char* version1, char* version2){
+	//return 1 if version1 more fresh
+	//return 0 if version2 more fresh
+
+	unsigned major1 = 0, minor1 = 0, bugfix1 = 0;
+    unsigned major2 = 0, minor2 = 0, bugfix2 = 0;
+    sscanf(version1, "%u.%u.%u", &major1, &minor1, &bugfix1);
+    sscanf(version2, "%u.%u.%u", &major2, &minor2, &bugfix2);
+    if (major1 < major2) return 0;
+    if (major1 > major2) return 1;
+    if (minor1 < minor2) return 0;
+    if (minor1 > minor2) return 1;
+    if (bugfix1 < bugfix2) return 0;
+    if (bugfix1 > bugfix2) return 1;
+	return -1;
+}
+
 void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
 {
 	node *p1 = jsonInfo1->tail;
@@ -190,7 +207,7 @@ void getFreshest(list* jsonInfo1, list* jsonInfo2, list* freshList)
 		while(p2 != NULL){
 			if(strcmp(p1->v.name, p2->v.name) == 0){
 				unique = 0;
-				if(p1->v.buildtime > p2->v.buildtime){
+				if(__compareVersion(p1->v.version, p2->v.version)){
 					pushList(freshList, p1->v.name, p1->v.buildtime, p1->v.version);
 				}
 				else{
